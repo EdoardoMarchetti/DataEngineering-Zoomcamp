@@ -8,5 +8,6 @@ COPY pyproject.toml .python-version uv.lock ./
 
 RUN uv sync --locked
 
+COPY data_ingestion.py .
 
-ENTRYPOINT [ "python", "pipeline.py" ]
+ENTRYPOINT [ "python", "data_ingestion.py" ]

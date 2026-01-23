@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  pgdatabase:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "ny_taxi"
+    volumes:
+      - ny_taxi_postgres_data:/var/lib/postgresql
+    ports:
+      - "5433:5432"
+    #networks:
+    #  - pg-network
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+      PGADMIN_DEFAULT_PASSWORD: "root"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8085:80"
+    #networks:
+    #  - pg-network
+    restart: unless-stopped
+    depends_on:
+      - pgdatabase
+
+volumes:
+  ny_taxi_postgres_data:
+  pgadmin_data:
+
+# Definizione della rete di comunicazione tra i container
+# (superfluo in quanto tutto ciò che parte da docker compose parte sempre dalla stessa rete)
+#networks:
+#  pg-network:
+#    driver: bridge

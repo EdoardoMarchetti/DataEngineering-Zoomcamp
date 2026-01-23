@@ -84,6 +84,8 @@ def ingest_data(
 @click.option('--chunksize', default=100000, type=int, help='Chunk size for data ingestion')
 @click.option('--target-table', default='yellow_taxi_data', help='Target table name')
 @click.option('--url-prefix', default='https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow', help='URL prefix for data files')
+
+
 def main(year, month, pg_user, pg_pass, pg_host, pg_port, pg_db, chunksize, target_table, url_prefix):
     engine = create_engine(f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}')
     url = f'{url_prefix}/yellow_tripdata_{year:04d}-{month:02d}.csv.gz'

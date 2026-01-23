@@ -1,0 +1,37 @@
+# Avvia un container PostgreSQL con persistenza dei dati
+docker run -it --rm \
+    -e POSTGRES_USER="root" \  # Username per l'accesso al database
+    -e POSTGRES_PASSWORD="root" \  # Password per l'accesso al database
+    -e POSTGRES_DB="ny_taxi" \  # Nome del database da creare all'avvio
+    -v "ny_taxi_postgres_data:/var/lib/postgresql" \  # Volume per persistenza dei dati
+    -p 5432:5432 \  # Espone la porta 5432 sulla macchina host
+    --name pgdatabase \  # Nome del container
+    --network=pg-network \  # Rete Docker per comunicazione tra container
+    postgres:18
+
+
+# Esegue il data ingestion: carica i dati dei taxi di NYC nel database PostgreSQL
+docker run -it --rm \
+    --network=pg-network \  # Nome della rete in cui è in esecuzione postgres
+  taxi_ingest:v001 \
+    --pg-user=root \  # Username per connettersi a PostgreSQL
+    --pg-pass=root \  # Password per connettersi a PostgreSQL
+    --pg-host=pgdatabase \  # Nome del container in cui è in esecuzione postgres
+    --pg-port=5432 \  # Porta del database PostgreSQL
+    --pg-db=ny_taxi \  # Nome del database di destinazione
+    --target-table=yellow_taxi_trips_2021_2 \  # Nome della tabella dove inserire i dati
+    --year=2021 \  # Anno dei dati da processare
+    --month=2 \  # Mese dei dati da processare
+    --chunksize=100000  # Numero di righe da processare per batch
+
+
+
+# Avvia un container pgAdmin per la gestione visuale di PostgreSQL
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \    # Email di login per pgAdmin
+  -e PGADMIN_DEFAULT_PASSWORD="root" \            # Password di login per pgAdmin
+  -v pgadmin_data:/var/lib/pgadmin \              # Volume per la persistenza dei dati di pgAdmin
+  -p 8085:80 \                                    # Espone pgAdmin sulla porta 8085 dell'host
+  --network=pg-network \                          # Collega pgAdmin alla stessa rete del database Postgres
+  --name pgadmin \                                # Nome del container pgAdmin
+  dpage/pgadmin4                                  # Immagine ufficiale pgAdmin 4
