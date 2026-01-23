@@ -9,16 +9,18 @@ terraform {
 
 
 provider "google" {
-    project = "dtc-de-course-485215"
-    region = "europe-west1"
-    credentials = file("keys/service_credentials.json")
+    project = var.project_id
+    region = var.project_region
+    credentials = file(var.project_credentials)
 }
 
+# Resource to create a Google Cloud Storage bucket named "dtc-de-course-485215-demo-bucket"
 resource "google_storage_bucket" "demo-bucket" {
   name          = "dtc-de-course-485215-demo-bucket"
   location      = "europe-west1"
-  force_destroy = true
+  force_destroy = true  # Ensures the bucket and all its contents are deleted when destroyed
 
+  # Lifecycle rule to automatically delete objects older than 3 days
   lifecycle_rule {
     condition {
       age = 3
@@ -28,6 +30,7 @@ resource "google_storage_bucket" "demo-bucket" {
     }
   }
 
+  # Lifecycle rule to abort incomplete multipart uploads older than 1 day
   lifecycle_rule {
     condition {
       age = 1
@@ -36,4 +39,10 @@ resource "google_storage_bucket" "demo-bucket" {
       type = "AbortIncompleteMultipartUpload"
     }
   }
+}
+
+
+resource "google_bigquery_dataset" "demo-dataset" {
+  dataset_id    = var.bigquery_dataset_id
+  location      = var.project_location
 }
