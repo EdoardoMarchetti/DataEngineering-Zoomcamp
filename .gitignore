@@ -47,3 +47,12 @@ Thumbs.db
 
 # Data
 *.parquet
+
+# Terraform
+*/terraform/keys/*.json
+*/terraform/keys/*
+*/01-docker-terraform/terraform/keys/service_credentials.json
+*/terraform/.terraform
+*/terraform/.terraform.lock.hcl
+*/terraform/terraform.tfstate
+*/terraform/terraform.tfstate.backup

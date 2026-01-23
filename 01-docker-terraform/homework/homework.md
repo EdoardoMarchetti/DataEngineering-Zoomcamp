@@ -80,7 +80,7 @@ If multiple answers are correct, select any
 
 Answers:
 
-- postgres:5432 (using the contianer name)
+- postgres:5432 (using the container name)
 - db:5432 (using the service name)
 
 ## Prepare the Data
@@ -142,7 +142,7 @@ from green_taxi_data
 where trip_distance < 100)
 ```
 
-Answer: 
+Answer:
 
 2025-11-14
 
@@ -186,6 +186,24 @@ Note: it's `tip` , not `trip`. We need the name of the zone, not the ID.
 - East Harlem North
 - LaGuardia Airport
 
+Solution:
+
+```sql
+Select 
+	dozones."Zone" as do_zone,
+	green_taxi_data.tip_amount
+from green_taxi_data, zones as puzones, zones as dozones
+where 
+	Date(green_taxi_data.lpep_pickup_datetime) >= '2025-11-01' 
+	and Date(green_taxi_data.lpep_pickup_datetime) < '2025-12-01'
+	and green_taxi_data."PULocationID" = puzones."LocationID"
+	and green_taxi_data."DOLocationID" = dozones."LocationID"
+	and puzones."Zone" = 'East Harlem North'
+order by tip_amount DESC
+LIMIT 1
+
+```
+
 Answer:
 
 Yorkville West
@@ -215,6 +233,10 @@ Answers:
 - terraform init, terraform run -auto-approve, terraform destroy
 - terraform init, terraform apply -auto-approve, terraform destroy
 - terraform import, terraform apply -y, terraform rm
+
+Answer:
+
+terraform init, terraform apply -auto-approve, terraform destroy
 
 ## Submitting the solutions
 
