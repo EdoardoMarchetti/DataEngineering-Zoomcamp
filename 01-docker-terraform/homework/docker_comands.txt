@@ -1,0 +1,37 @@
+# Build the docker image
+docker build -t trip-ingestion .
+
+# ============================================
+# Zone Ingestion
+# ============================================
+
+# Run zone ingestion 
+docker run --rm \
+    --network homework_default \
+    trip-ingestion zone_ingestion.py \
+    --target-table zones \
+    --pg-host db \
+    --pg-port 5432 \
+    --pg-user postgres \
+    --pg-pass postgres \
+    --pg-db ny_taxi
+
+
+# ============================================
+# Trip Ingestion - Green Taxi Data
+# ============================================
+
+# Run trip ingestion
+docker run --rm \
+    --network homework_default \
+    trip-ingestion trip_ingestion.py \
+    --taxi-type green \
+    --year 2025 \
+    --month 11 \
+    --target-table green_taxi_data \
+    --pg-host db \
+    --pg-port 5432 \
+    --pg-user postgres \
+    --pg-pass postgres \
+    --pg-db ny_taxi
+
