@@ -1,6 +1,6 @@
 # Flow for homework Q3, Q4, Q5: builds a GCP table (taxi_type, year, month, file, rows) per file.
 # No CSV upload to GCS — rows are counted locally and only the count is written to BigQuery.
-# After backfilling 2020 + 2021 data:
+
 
 
 id: gcp_file_row_counts
