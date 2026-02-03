@@ -1,4 +1,4 @@
-## in Module 2 Homework
+## Module 2 Homework
 
 ATTENTION: At the end of the submission form, you will be required to include a link to your GitHub repository or other public code-hosting site. This repository should contain your code for solving the homework. If your solution includes code that is not in file format, please include these directly in the README file of your repository.
 
@@ -75,7 +75,7 @@ Complete the quiz shown below. It's a set of 6 multiple-choice questions to test
 - `green_tripdata_04_2020.csv`
 - `green_tripdata_2020.csv`
 
-  Answer: `green_tripdata_2020-04.csv`.  The render function allows to render expressions during execution, so in the expression file: "{{inputs.taxi}}_tripdata_{{inputs.year}}-{{inputs.month}}.csv", the placeholders are replaced with the input values for taxi type, year and month.
+  Answer: `green_tripdata_2020-04.csv`.  The render function allows you to render expressions during execution, so in the expression file: "{{inputs.taxi}}_tripdata_{{inputs.year}}-{{inputs.month}}.csv", the placeholders are replaced with the input values for taxi type, year and month.
 
 3) How many rows are there for the `Yellow` Taxi data for all CSV files in the year 2020?
 
@@ -84,12 +84,23 @@ Complete the quiz shown below. It's a set of 6 multiple-choice questions to test
 - 18,324,219
 - 29,430,127
 
+  Answer: 24,648,499. To optimize the rows count I created a flow that download each file, unzip it and count the rows. Then in the GCP dataset I have a table where taxi_type, year, month, file and row count are stored. The goal was to reduce the execution time removing the longest task (file uploading). The complete flow is in the repository. The query used to answer the questions 3 and 4 is the following one.
+
+  ```sql
+  SELECT taxi_type, SUM(n_rows) 
+  FROM `my_dataset.taxi_file_row_counts` 
+  WHERE year = 2020
+  GROUP by taxi_type
+  ```
+
 4) How many rows are there for the `Green` Taxi data for all CSV files in the year 2020?
 
 - 5,327,301
 - 936,199
 - 1,734,051
 - 1,342,034
+
+  Answer: 1,734,051
 
 5) How many rows are there for the `Yellow` Taxi data for the March 2021 CSV file?
 
@@ -98,9 +109,30 @@ Complete the quiz shown below. It's a set of 6 multiple-choice questions to test
 - 1,925,152
 - 2,561,031
 
+  Answer: 1,925,152.
+
+  ```sql
+  SELECT *
+  FROM `my_dataset.taxi_file_row_counts` 
+  WHERE year = 2021 and month=3 and taxi_type = 'yellow'
+
+  ```
+
 6) How would you configure the timezone to New York in a Schedule trigger?
 
 - Add a `timezone` property set to `EST` in the `Schedule` trigger configuration
 - Add a `timezone` property set to `America/New_York` in the `Schedule` trigger configuration
 - Add a `timezone` property set to `UTC-5` in the `Schedule` trigger configuration
 - Add a `location` property set to `New_York` in the `Schedule` trigger configuration
+
+  Answer: Add a `timezone` property set to `America/New_York` in the `Schedule` trigger configuration
+
+```yaml
+triggers:
+  - id: "yellow_schedule"
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 10 1 * *"
+    timezone: America/New_York
+    inputs:
+      taxi: yellow
+```
