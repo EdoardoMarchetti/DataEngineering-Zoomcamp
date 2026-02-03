@@ -56,3 +56,6 @@ Thumbs.db
 */terraform/.terraform.lock.hcl
 */terraform/terraform.tfstate
 */terraform/terraform.tfstate.backup
+
+#Cursor
+.cursorignore
