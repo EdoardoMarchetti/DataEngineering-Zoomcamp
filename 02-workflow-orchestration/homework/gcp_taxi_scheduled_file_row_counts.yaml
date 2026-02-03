@@ -1,0 +1,105 @@
+# Flow for homework Q3, Q4, Q5: builds a GCP table (taxi_type, year, month, file, rows) per file.
+# No CSV upload to GCS — rows are counted locally and only the count is written to BigQuery.
+# After backfilling 2020 + 2021 data:
+
+
+id: gcp_file_row_counts
+namespace: zoomcamp
+description: |
+  Scheduled taxi pipeline that maintains a BigQuery table (taxi_type, year, month, file, n_rows) only.
+  CSVs are not uploaded to GCS; row count is computed locally. 
+
+inputs:
+  - id: taxi
+    type: SELECT
+    displayName: Select taxi type
+    values: [yellow, green]
+    defaults: green
+
+variables:
+  file: "{{inputs.taxi}}_tripdata_{{trigger.date | date('yyyy-MM')}}.csv"
+  row_counts_table: "{{kv('GCP_DATASET')}}.taxi_file_row_counts"
+
+tasks:
+  - id: set_label
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      file: "{{render(vars.file)}}"
+      taxi: "{{inputs.taxi}}"
+
+  - id: extract_and_count
+    type: io.kestra.plugin.scripts.shell.Commands
+    outputFiles:
+      - "*.csv"
+      - row_count.txt
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    commands:
+      - wget -qO- https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{{inputs.taxi}}/{{render(vars.file)}}.gz | gunzip > {{render(vars.file)}}
+      - echo $(($(wc -l < {{render(vars.file)}}) - 1)) > row_count.txt
+
+  - id: count_rows
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:slim
+    dependencies:
+      - kestra
+    inputFiles:
+      row_count: "{{outputs.extract_and_count.outputFiles['row_count.txt']}}"
+    script: |
+      from kestra import Kestra
+      with open("row_count") as f:
+          n = int(f.read().strip())
+      Kestra.outputs({"row_count": n})
+
+  - id: bq_create_row_counts_table
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      CREATE TABLE IF NOT EXISTS `{{kv('GCP_PROJECT_ID')}}.{{render(vars.row_counts_table)}}`
+      (
+        taxi_type STRING OPTIONS (description = 'Taxi type: yellow or green'),
+        year INT64 OPTIONS (description = 'Year, e.g. 2020, 2021'),
+        month INT64 OPTIONS (description = 'Month (1-12)'),
+        file STRING OPTIONS (description = 'CSV file name, e.g. yellow_tripdata_2020-01.csv'),
+        n_rows INT64 OPTIONS (description = 'Number of rows in that file')
+      );
+
+  - id: bq_upsert_row_count
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      MERGE `{{kv('GCP_PROJECT_ID')}}.{{render(vars.row_counts_table)}}` T
+      USING (
+        SELECT 
+          "{{inputs.taxi}}" AS taxi_type,
+          CAST({{trigger.date | date('yyyy')}} AS INT64) AS year,
+          CAST({{trigger.date | date('MM')}} AS INT64) AS month,
+          "{{render(vars.file)}}" AS file,
+          {{outputs.count_rows.vars.row_count}} AS n_rows
+      ) S
+      ON T.taxi_type = S.taxi_type AND T.file = S.file
+      WHEN MATCHED THEN UPDATE SET n_rows = S.n_rows
+      WHEN NOT MATCHED THEN INSERT (taxi_type, year, month, file, n_rows) VALUES (S.taxi_type, S.year, S.month, S.file, S.n_rows);
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: To avoid cluttering your storage, we will remove the downloaded files
+
+pluginDefaults:
+  - type: io.kestra.plugin.gcp
+    values:
+      serviceAccount: "{{kv('GCP_CREDS')}}"
+      projectId: "{{kv('GCP_PROJECT_ID')}}"
+      location: "{{kv('GCP_LOCATION')}}"
+      bucket: "{{kv('GCP_BUCKET_NAME')}}"
+
+triggers:
+  - id: green_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 1 * *"
+    inputs:
+      taxi: green
+
+  - id: yellow_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 10 1 * *"
+    inputs:
+      taxi: yellow
