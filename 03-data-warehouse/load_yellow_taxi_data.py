@@ -7,14 +7,17 @@ from google.api_core.exceptions import NotFound, Forbidden
 import time
 
 
-# Change this to your bucket name
-BUCKET_NAME = "dezoomcamp_hw3_2025"
 
-# If you authenticated through the GCP SDK you can comment out these two lines
-CREDENTIALS_FILE = "gcs.json"
-client = storage.Client.from_service_account_json(CREDENTIALS_FILE)
-# If commented initialize client with the following
-# client = storage.Client(project='zoomcamp-mod3-datawarehouse')
+# Change this to your bucket name
+BUCKET_NAME = "dtc-de-course-485215-hw3-bucket"
+
+# Initialize client - try service account file first, then fall back to default credentials
+CREDENTIALS_FILE = os.path.join('..', 'keys', 'service_credentials.json')
+if os.path.exists(CREDENTIALS_FILE):
+    client = storage.Client.from_service_account_json(CREDENTIALS_FILE)
+else:
+    # If no service account file, use default credentials (requires gcloud auth application-default login)
+    client = storage.Client(project='dtc-de-course-485215')
 
 
 BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-"
@@ -102,11 +105,15 @@ def upload_to_gcs(file_path, max_retries=3):
 
 
 if __name__ == "__main__":
+
+    print(f"Creating bucket {BUCKET_NAME}...")
     create_bucket(BUCKET_NAME)
 
+    print(f"Downloading files...")
     with ThreadPoolExecutor(max_workers=4) as executor:
         file_paths = list(executor.map(download_file, MONTHS))
 
+    print(f"Uploading files to GCS...")
     with ThreadPoolExecutor(max_workers=4) as executor:
         executor.map(upload_to_gcs, filter(None, file_paths))  # Remove None values
 
