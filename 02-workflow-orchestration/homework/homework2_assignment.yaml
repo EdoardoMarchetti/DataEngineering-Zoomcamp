@@ -1,4 +1,4 @@
-id: homework2_assigment
+id: homework2_assignment
 namespace: zoomcamp
 description: |
   Best to add a label `backfill:true` from the UI to track executions created via a backfill.
