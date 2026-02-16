@@ -1,0 +1,13 @@
+# Data directory
+data/
+
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+#dbt
+.dbt/
+
+#keys
+keys/

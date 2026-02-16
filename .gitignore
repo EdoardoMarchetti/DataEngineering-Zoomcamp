@@ -47,6 +47,9 @@ Thumbs.db
 
 # Data
 *.parquet
+*.csv.gz
+*.csv
+*.duckdb
 
 # Terraform
 */terraform/keys/*.json
@@ -62,3 +65,9 @@ Thumbs.db
 
 # Service credentials
 service_credentials.json
+
+#dbt
+.dbt/
+
+
+*.parquet
