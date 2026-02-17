@@ -69,5 +69,5 @@ service_credentials.json
 #dbt
 .dbt/
 
-
-*.parquet
+#logs
+*/logs/*

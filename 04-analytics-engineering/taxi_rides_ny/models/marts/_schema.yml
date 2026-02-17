@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: dim_locations
+    description: "Dimension table for locations"
+    columns:
+      - name: location_id
+        description: "The location ID"
+        data_type: integer
+      - name: borough
+        description: "The borough"
+        data_type: string
+      - name: zone
+        description: "The zone"
+        data_type: string
